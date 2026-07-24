@@ -1,0 +1,18 @@
+import { Badge } from "@/components/ui/badge";
+import type { DeviceStatus } from "@/lib/database.types";
+
+const LABELS: Record<DeviceStatus, string> = {
+  in_stock: "En stock",
+  reserved: "Reservado",
+  sold: "Vendido",
+};
+
+const VARIANTS: Record<DeviceStatus, "default" | "secondary" | "outline"> = {
+  in_stock: "default",
+  reserved: "secondary",
+  sold: "outline",
+};
+
+export function DeviceStatusBadge({ status }: { status: DeviceStatus }) {
+  return <Badge variant={VARIANTS[status]}>{LABELS[status]}</Badge>;
+}
