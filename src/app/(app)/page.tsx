@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { format, subDays } from "date-fns";
-import { AlertTriangle, Boxes, DollarSign, TrendingUp, ShoppingCart } from "lucide-react";
+import {
+  AlertTriangle,
+  Boxes,
+  CalendarClock,
+  DollarSign,
+  TrendingUp,
+  ShoppingCart,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getSettings, resolveCurrentExchangeRate } from "@/lib/settings";
 import { toBaseCurrency, formatCurrency } from "@/lib/currency";
@@ -87,18 +94,26 @@ export default async function DashboardPage() {
     .slice(-6)
     .map(([month, profit]) => ({ month, profit: Math.round(profit * 100) / 100 }));
 
-  const overdueThreshold = format(subDays(new Date(), 3), "yyyy-MM-dd");
-  const { data: overdueInstallments } = await supabase
+  const { data: pendingInstallments } = await supabase
     .from("installments")
-    .select("amount, currency")
-    .eq("paid", false)
-    .lt("due_date", overdueThreshold);
+    .select("amount, currency, due_date")
+    .eq("paid", false);
 
-  const overdueTotal = (overdueInstallments ?? []).reduce(
+  const pendingTotal = (pendingInstallments ?? []).reduce(
     (sum, i) => sum + toBaseCurrency(i.amount, i.currency, currentRate, base),
     0,
   );
-  const overdueCount = overdueInstallments?.length ?? 0;
+  const pendingCount = pendingInstallments?.length ?? 0;
+
+  const overdueThreshold = format(subDays(new Date(), 3), "yyyy-MM-dd");
+  const overdueInstallments = (pendingInstallments ?? []).filter(
+    (i) => i.due_date < overdueThreshold,
+  );
+  const overdueTotal = overdueInstallments.reduce(
+    (sum, i) => sum + toBaseCurrency(i.amount, i.currency, currentRate, base),
+    0,
+  );
+  const overdueCount = overdueInstallments.length;
 
   const { data: recentSales } = await supabase
     .from("sales")
@@ -132,7 +147,7 @@ export default async function DashboardPage() {
         </Link>
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard
           label="Stock actual"
           value={`${stockCount}`}
@@ -156,6 +171,12 @@ export default async function DashboardPage() {
           value={formatCurrency(totalRevenue, base)}
           sub={`${soldRows.length} equipos vendidos`}
           icon={ShoppingCart}
+        />
+        <StatCard
+          label="Cuotas pendientes"
+          value={formatCurrency(pendingTotal, base)}
+          sub={`${pendingCount} cuota${pendingCount === 1 ? "" : "s"} por cobrar`}
+          icon={CalendarClock}
         />
       </div>
 
