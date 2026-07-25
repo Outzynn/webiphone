@@ -148,7 +148,7 @@ create trigger devices_set_updated_at
 
 create table app_settings (
   key text primary key,
-  value jsonb not null
+  value jsonb
 );
 
 insert into app_settings (key, value) values

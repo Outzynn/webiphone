@@ -15,12 +15,17 @@ export async function updateAppSettings(formData: FormData) {
   const labelHeight = Number(str(formData, "label_height_mm") ?? 30);
   const baseCurrency = str(formData, "base_currency") ?? "USD";
 
-  await Promise.all([
+  const updates = [
     updateSetting("exchange_rate_source", exchangeRateSource),
-    updateSetting("manual_exchange_rate", manualRate ? Number(manualRate) : null),
     updateSetting("label_size_mm", { width: labelWidth, height: labelHeight }),
     updateSetting("base_currency", baseCurrency),
-  ]);
+  ];
+  // La columna value no admite null: solo se actualiza cuando hay un valor real
+  // (si la fuente no es "manual" se deja el valor guardado anteriormente, que no se usa).
+  if (manualRate) {
+    updates.push(updateSetting("manual_exchange_rate", Number(manualRate)));
+  }
+  await Promise.all(updates);
 
   revalidatePath("/configuracion");
   revalidatePath("/");
