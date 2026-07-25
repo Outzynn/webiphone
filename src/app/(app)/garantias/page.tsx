@@ -18,6 +18,12 @@ const STATUS_LABEL: Record<string, string> = {
   resuelto: "Resuelto",
 };
 
+const STATUS_VARIANT: Record<string, "warning" | "default" | "success"> = {
+  abierto: "warning",
+  en_reparacion: "default",
+  resuelto: "success",
+};
+
 export default async function GarantiasPage() {
   const supabase = await createClient();
 
@@ -61,7 +67,7 @@ export default async function GarantiasPage() {
                   <TableCell>{c.clients?.name ?? "—"}</TableCell>
                   <TableCell className="max-w-64 truncate">{c.description}</TableCell>
                   <TableCell>
-                    <Badge variant={c.status === "resuelto" ? "outline" : "secondary"}>
+                    <Badge variant={STATUS_VARIANT[c.status]}>
                       {STATUS_LABEL[c.status]}
                     </Badge>
                   </TableCell>

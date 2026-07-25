@@ -7,9 +7,9 @@ const LABELS: Record<DeviceStatus, string> = {
   sold: "Vendido",
 };
 
-const VARIANTS: Record<DeviceStatus, "default" | "secondary" | "outline"> = {
-  in_stock: "default",
-  reserved: "secondary",
+const VARIANTS: Record<DeviceStatus, "success" | "warning" | "outline"> = {
+  in_stock: "success",
+  reserved: "warning",
   sold: "outline",
 };
 

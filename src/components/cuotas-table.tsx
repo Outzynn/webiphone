@@ -127,11 +127,11 @@ function CuotaTableRow({
       <TableCell>{formatCurrency(row.amount, row.currency)}</TableCell>
       <TableCell>
         {row.paid ? (
-          <Badge variant="outline">Pagada</Badge>
+          <Badge variant="success">Pagada</Badge>
         ) : row.overdue ? (
           <Badge variant="destructive">Vencida hace {row.daysOverdue}d</Badge>
         ) : (
-          <Badge variant="secondary">Pendiente</Badge>
+          <Badge variant="warning">Pendiente</Badge>
         )}
       </TableCell>
       <TableCell className="flex items-center gap-1">
