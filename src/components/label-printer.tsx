@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import QRCode from "qrcode";
+import { useMemo, useState } from "react";
 import { Printer, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +27,6 @@ export function LabelPrinter({
   const [selected, setSelected] = useState<Set<string>>(
     new Set(preselectedId ? [preselectedId] : []),
   );
-  const [qrCodes, setQrCodes] = useState<Record<string, string>>({});
 
   const filtered = useMemo(() => {
     if (!query.trim()) return devices;
@@ -39,24 +37,6 @@ export function LabelPrinter({
   }, [devices, query]);
 
   const selectedDevices = devices.filter((d) => selected.has(d.id));
-
-  useEffect(() => {
-    let cancelled = false;
-    async function generate() {
-      const entries = await Promise.all(
-        selectedDevices.map(async (d) => {
-          const url = await QRCode.toDataURL(d.imei, { margin: 0, width: 160 });
-          return [d.id, url] as const;
-        }),
-      );
-      if (!cancelled) setQrCodes(Object.fromEntries(entries));
-    }
-    if (selectedDevices.length > 0) generate();
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected]);
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -128,17 +108,13 @@ export function LabelPrinter({
         {selectedDevices.map((d) => (
           <div
             key={d.id}
-            className="label-card flex items-center gap-2 border border-dashed p-2"
+            className="label-card flex items-center justify-center border border-dashed p-2"
             style={{
               width: `${labelSize.width}mm`,
               height: `${labelSize.height}mm`,
             }}
           >
-            {qrCodes[d.id] ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={qrCodes[d.id]} alt="" className="h-full shrink-0" />
-            ) : null}
-            <div className="min-w-0 flex-1 overflow-hidden text-[7px] leading-tight">
+            <div className="min-w-0 w-full overflow-hidden text-[7px] leading-tight">
               <p className="truncate font-semibold">{d.model}</p>
               <p className="truncate">IMEI: {d.imei}</p>
               <p className="truncate">

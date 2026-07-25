@@ -3,7 +3,9 @@
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { differenceInCalendarDays } from "date-fns";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -35,6 +37,7 @@ type Filter = "todas" | "pendientes" | "vencidas" | "pagadas";
 
 export function CuotasTable({ rows }: { rows: CuotaRow[] }) {
   const [filter, setFilter] = useState<Filter>("todas");
+  const [query, setQuery] = useState("");
 
   const today = useMemo(() => new Date(new Date().toDateString()), []);
 
@@ -48,7 +51,11 @@ export function CuotasTable({ rows }: { rows: CuotaRow[] }) {
     [rows, today],
   );
 
-  const filtered = enriched.filter((r) => {
+  const searched = enriched.filter(
+    (r) => !query.trim() || r.clientName?.toLowerCase().includes(query.trim().toLowerCase()),
+  );
+
+  const filtered = searched.filter((r) => {
     if (filter === "pendientes") return !r.paid && !r.overdue;
     if (filter === "vencidas") return r.overdue;
     if (filter === "pagadas") return r.paid;
@@ -56,14 +63,24 @@ export function CuotasTable({ rows }: { rows: CuotaRow[] }) {
   });
 
   const counts = {
-    todas: enriched.length,
-    pendientes: enriched.filter((r) => !r.paid && !r.overdue).length,
-    vencidas: enriched.filter((r) => r.overdue).length,
-    pagadas: enriched.filter((r) => r.paid).length,
+    todas: searched.length,
+    pendientes: searched.filter((r) => !r.paid && !r.overdue).length,
+    vencidas: searched.filter((r) => r.overdue).length,
+    pagadas: searched.filter((r) => r.paid).length,
   };
 
   return (
     <div className="grid gap-3">
+      <div className="relative">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Buscar por cliente..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="pl-8"
+        />
+      </div>
+
       <div className="flex flex-wrap gap-2">
         {(["todas", "pendientes", "vencidas", "pagadas"] as Filter[]).map((f) => (
           <Button
