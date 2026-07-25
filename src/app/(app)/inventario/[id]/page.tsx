@@ -23,7 +23,7 @@ export default async function DeviceDetailPage({
   const { data: device } = await supabase
     .from("devices")
     .select(
-      "*, purchases(*, suppliers(name)), sales(*, clients(name), installments(*)), warranty_claims(*)",
+      "*, purchases(*, suppliers(name), trade_in_clients:clients!purchases_trade_in_client_id_fkey(name)), sales:sales!sales_device_id_fkey(*, clients(name), installments(*)), warranty_claims(*)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -138,7 +138,10 @@ export default async function DeviceDetailPage({
               label="Costo"
               value={formatCurrency(purchase.cost_amount, purchase.cost_currency)}
             />
-            <Field label="Proveedor" value={purchase.suppliers?.name ?? "—"} />
+            <Field
+              label={purchase.trade_in_clients ? "Cliente (plan canje)" : "Proveedor"}
+              value={purchase.trade_in_clients?.name ?? purchase.suppliers?.name ?? "—"}
+            />
             <Field
               label="Cotización al comprar"
               value={purchase.exchange_rate_snapshot ?? "—"}

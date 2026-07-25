@@ -18,7 +18,9 @@ export default async function VentasPage() {
   const supabase = await createClient();
   const { data: sales } = await supabase
     .from("sales")
-    .select("id, sale_date, sale_amount, sale_currency, payment_type, devices(model, imei), clients(name)")
+    .select(
+      "id, sale_date, sale_amount, sale_currency, payment_type, devices:devices!sales_device_id_fkey(model, imei), clients(name)",
+    )
     .order("sale_date", { ascending: false });
 
   return (

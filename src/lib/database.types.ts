@@ -91,6 +91,7 @@ export interface Database {
           id: string;
           device_id: string;
           supplier_id: string | null;
+          trade_in_client_id: string | null;
           purchase_date: string;
           cost_amount: number;
           cost_currency: CurrencyCode;
@@ -119,6 +120,13 @@ export interface Database {
             referencedRelation: "suppliers";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "purchases_trade_in_client_id_fkey";
+            columns: ["trade_in_client_id"];
+            isOneToOne: false;
+            referencedRelation: "clients";
+            referencedColumns: ["id"];
+          },
         ];
       };
       sales: {
@@ -131,6 +139,9 @@ export interface Database {
           sale_currency: CurrencyCode;
           exchange_rate_snapshot: number | null;
           payment_type: PaymentType;
+          trade_in_device_id: string | null;
+          trade_in_value_amount: number | null;
+          trade_in_value_currency: CurrencyCode | null;
           notes: string | null;
           created_at: string;
         };
@@ -153,6 +164,13 @@ export interface Database {
             columns: ["client_id"];
             isOneToOne: false;
             referencedRelation: "clients";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sales_trade_in_device_id_fkey";
+            columns: ["trade_in_device_id"];
+            isOneToOne: false;
+            referencedRelation: "devices";
             referencedColumns: ["id"];
           },
         ];

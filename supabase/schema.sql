@@ -65,6 +65,8 @@ create table purchases (
   id uuid primary key default gen_random_uuid(),
   device_id uuid not null unique references devices (id) on delete cascade,
   supplier_id uuid references suppliers (id) on delete set null,
+  -- si el equipo entró por plan canje, qué cliente lo entregó (en vez de un proveedor)
+  trade_in_client_id uuid references clients (id) on delete set null,
   purchase_date date not null default current_date,
   cost_amount numeric(12, 2) not null check (cost_amount >= 0),
   cost_currency currency_code not null,
@@ -75,6 +77,7 @@ create table purchases (
 
 create index purchases_purchase_date_idx on purchases (purchase_date);
 create index purchases_supplier_id_idx on purchases (supplier_id);
+create index purchases_trade_in_client_id_idx on purchases (trade_in_client_id);
 
 create table sales (
   id uuid primary key default gen_random_uuid(),
@@ -85,12 +88,17 @@ create table sales (
   sale_currency currency_code not null,
   exchange_rate_snapshot numeric(12, 4),
   payment_type payment_type not null default 'contado',
+  -- plan canje: equipo recibido del cliente como parte de pago (se carga a inventario aparte)
+  trade_in_device_id uuid references devices (id) on delete set null,
+  trade_in_value_amount numeric(12, 2) check (trade_in_value_amount >= 0),
+  trade_in_value_currency currency_code,
   notes text,
   created_at timestamptz not null default now()
 );
 
 create index sales_sale_date_idx on sales (sale_date);
 create index sales_client_id_idx on sales (client_id);
+create index sales_trade_in_device_id_idx on sales (trade_in_device_id);
 
 create table installments (
   id uuid primary key default gen_random_uuid(),

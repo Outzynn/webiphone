@@ -16,7 +16,9 @@ export default async function SaleDetailPage({
 
   const { data: sale } = await supabase
     .from("sales")
-    .select("*, devices(id, model, imei, storage_gb), clients(name, phone), installments(*)")
+    .select(
+      "*, sold_device:devices!sales_device_id_fkey(id, model, imei, storage_gb), trade_in_device:devices!sales_trade_in_device_id_fkey(id, model, imei), clients(name, phone), installments(*)",
+    )
     .eq("id", id)
     .maybeSingle();
 
@@ -40,10 +42,13 @@ export default async function SaleDetailPage({
         <CardContent className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
           <div>
             <p className="text-muted-foreground">Dispositivo</p>
-            <Link href={`/inventario/${sale.devices?.id}`} className="hover:underline">
-              {sale.devices?.model} {sale.devices?.storage_gb ? `· ${sale.devices.storage_gb}GB` : ""}
+            <Link href={`/inventario/${sale.sold_device?.id}`} className="hover:underline">
+              {sale.sold_device?.model}{" "}
+              {sale.sold_device?.storage_gb ? `· ${sale.sold_device.storage_gb}GB` : ""}
             </Link>
-            <p className="font-mono text-xs text-muted-foreground">{sale.devices?.imei}</p>
+            <p className="font-mono text-xs text-muted-foreground">
+              {sale.sold_device?.imei}
+            </p>
           </div>
           <div>
             <p className="text-muted-foreground">Cliente</p>
@@ -72,6 +77,36 @@ export default async function SaleDetailPage({
           ) : null}
         </CardContent>
       </Card>
+
+      {sale.trade_in_device ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Plan canje</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+            <div>
+              <p className="text-muted-foreground">Equipo recibido</p>
+              <Link
+                href={`/inventario/${sale.trade_in_device.id}`}
+                className="hover:underline"
+              >
+                {sale.trade_in_device.model}
+              </Link>
+              <p className="font-mono text-xs text-muted-foreground">
+                {sale.trade_in_device.imei}
+              </p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Valor reconocido</p>
+              <p>
+                {sale.trade_in_value_amount !== null && sale.trade_in_value_currency
+                  ? formatCurrency(sale.trade_in_value_amount, sale.trade_in_value_currency)
+                  : "—"}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {installments.length > 0 ? (
         <Card>

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Boxes, DollarSign, TrendingUp, ShoppingCart } from "lucide-react";
+import { format, subDays } from "date-fns";
+import { AlertTriangle, Boxes, DollarSign, TrendingUp, ShoppingCart } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getSettings, resolveCurrentExchangeRate } from "@/lib/settings";
 import { toBaseCurrency, formatCurrency } from "@/lib/currency";
@@ -29,7 +30,7 @@ export default async function DashboardPage() {
   const { data: devices } = await supabase
     .from("devices")
     .select(
-      "id, model, status, purchases(cost_amount, cost_currency, exchange_rate_snapshot), sales(sale_amount, sale_currency, exchange_rate_snapshot, sale_date)",
+      "id, model, status, purchases(cost_amount, cost_currency, exchange_rate_snapshot), sales:sales!sales_device_id_fkey(sale_amount, sale_currency, exchange_rate_snapshot, sale_date)",
     );
 
   const rows = devices ?? [];
@@ -86,9 +87,24 @@ export default async function DashboardPage() {
     .slice(-6)
     .map(([month, profit]) => ({ month, profit: Math.round(profit * 100) / 100 }));
 
+  const overdueThreshold = format(subDays(new Date(), 3), "yyyy-MM-dd");
+  const { data: overdueInstallments } = await supabase
+    .from("installments")
+    .select("amount, currency")
+    .eq("paid", false)
+    .lt("due_date", overdueThreshold);
+
+  const overdueTotal = (overdueInstallments ?? []).reduce(
+    (sum, i) => sum + toBaseCurrency(i.amount, i.currency, currentRate, base),
+    0,
+  );
+  const overdueCount = overdueInstallments?.length ?? 0;
+
   const { data: recentSales } = await supabase
     .from("sales")
-    .select("id, sale_date, sale_amount, sale_currency, devices(model, imei)")
+    .select(
+      "id, sale_date, sale_amount, sale_currency, devices:devices!sales_device_id_fkey(model, imei)",
+    )
     .order("sale_date", { ascending: false })
     .limit(5);
 
@@ -101,6 +117,20 @@ export default async function DashboardPage() {
           ARS/USD
         </p>
       </div>
+
+      {overdueCount > 0 ? (
+        <Link
+          href="/cuotas"
+          className="flex items-center gap-3 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive hover:bg-destructive/15"
+        >
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <span>
+            Tenés <strong>{overdueCount}</strong> cuota{overdueCount === 1 ? "" : "s"} vencida
+            {overdueCount === 1 ? "" : "s"} hace más de 3 días, por{" "}
+            {formatCurrency(overdueTotal, base)}. Ver detalle →
+          </span>
+        </Link>
+      ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
