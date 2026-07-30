@@ -1,23 +1,10 @@
-import Link from "next/link";
 import { Plus, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { LinkButton } from "@/components/link-button";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { DeviceStatusBadge } from "@/components/device-status-badge";
-import { formatCurrency } from "@/lib/currency";
+import { Card, CardContent } from "@/components/ui/card";
+import { InventarioTable, type InventarioRow } from "@/components/inventario-table";
 import type { DeviceStatus } from "@/lib/database.types";
 
 const VALID_STATUSES: DeviceStatus[] = ["in_stock", "reserved", "sold"];
@@ -32,7 +19,9 @@ export default async function InventarioPage({
 
   let query = supabase
     .from("devices")
-    .select("id, model, storage_gb, color, condition, imei, status, purchases(cost_amount, cost_currency)")
+    .select(
+      "id, model, storage_gb, color, condition, imei, status, battery_health_pct, list_price_amount, list_price_currency, purchases(cost_amount, cost_currency)",
+    )
     .order("created_at", { ascending: false });
 
   if (status && VALID_STATUSES.includes(status as DeviceStatus)) {
@@ -41,6 +30,21 @@ export default async function InventarioPage({
   if (q) query = query.or(`imei.ilike.%${q}%,model.ilike.%${q}%`);
 
   const { data: devices, error } = await query;
+
+  const rows: InventarioRow[] = (devices ?? []).map((d) => ({
+    id: d.id,
+    model: d.model,
+    storageGb: d.storage_gb,
+    color: d.color,
+    condition: d.condition,
+    imei: d.imei,
+    status: d.status,
+    batteryHealthPct: d.battery_health_pct,
+    costAmount: d.purchases?.cost_amount ?? null,
+    costCurrency: d.purchases?.cost_currency ?? null,
+    listPriceAmount: d.list_price_amount,
+    listPriceCurrency: d.list_price_currency,
+  }));
 
   return (
     <div className="grid gap-4">
@@ -85,49 +89,7 @@ export default async function InventarioPage({
             </p>
           ) : null}
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Modelo</TableHead>
-                <TableHead>IMEI</TableHead>
-                <TableHead>Condición</TableHead>
-                <TableHead>Costo</TableHead>
-                <TableHead>Estado</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {devices?.map((d) => (
-                <TableRow key={d.id} className="cursor-pointer">
-                  <TableCell>
-                    <Link href={`/inventario/${d.id}`} className="hover:underline">
-                      {d.model} {d.storage_gb ? `· ${d.storage_gb}GB` : ""}{" "}
-                      {d.color ? `· ${d.color}` : ""}
-                    </Link>
-                  </TableCell>
-                  <TableCell className="font-mono text-xs">{d.imei}</TableCell>
-                  <TableCell className="capitalize">{d.condition}</TableCell>
-                  <TableCell>
-                    {d.purchases
-                      ? formatCurrency(
-                          d.purchases.cost_amount,
-                          d.purchases.cost_currency,
-                        )
-                      : "—"}
-                  </TableCell>
-                  <TableCell>
-                    <DeviceStatusBadge status={d.status} />
-                  </TableCell>
-                </TableRow>
-              ))}
-              {devices?.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
-                    No hay dispositivos que coincidan con la búsqueda.
-                  </TableCell>
-                </TableRow>
-              ) : null}
-            </TableBody>
-          </Table>
+          <InventarioTable rows={rows} />
         </CardContent>
       </Card>
     </div>

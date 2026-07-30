@@ -57,6 +57,8 @@ export async function createDevice(formData: FormData) {
     imei: str(formData, "imei")!,
     serial_number: str(formData, "serial_number"),
     status: "in_stock",
+    list_price_amount: num(formData, "list_price_amount"),
+    list_price_currency: str(formData, "list_price_currency") as CurrencyCode,
     notes: str(formData, "notes"),
   });
   if (deviceError) throw deviceError;
@@ -93,6 +95,8 @@ export async function updateDevice(deviceId: string, formData: FormData) {
       battery_health_pct: num(formData, "battery_health_pct"),
       imei: str(formData, "imei")!,
       serial_number: str(formData, "serial_number"),
+      list_price_amount: num(formData, "list_price_amount"),
+      list_price_currency: str(formData, "list_price_currency") as CurrencyCode,
       notes: str(formData, "notes"),
     })
     .eq("id", deviceId);

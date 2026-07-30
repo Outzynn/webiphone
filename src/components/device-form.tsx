@@ -25,6 +25,8 @@ export interface DeviceFormValues {
   battery_health_pct?: number | null;
   imei?: string;
   serial_number?: string | null;
+  list_price_amount?: number | null;
+  list_price_currency?: string | null;
   notes?: string | null;
 }
 
@@ -162,6 +164,38 @@ export function DeviceForm({
             name="serial_number"
             defaultValue={defaultValues?.serial_number ?? ""}
           />
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor="list_price_amount">Precio de venta</Label>
+          <Input
+            id="list_price_amount"
+            name="list_price_amount"
+            type="number"
+            min={0}
+            step="0.01"
+            defaultValue={defaultValues?.list_price_amount ?? ""}
+          />
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor="list_price_currency">Moneda del precio</Label>
+          <Select
+            name="list_price_currency"
+            defaultValue={defaultValues?.list_price_currency ?? "USD"}
+            items={[
+              { value: "USD", label: "USD" },
+              { value: "ARS", label: "ARS" },
+            ]}
+          >
+            <SelectTrigger id="list_price_currency">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="USD">USD</SelectItem>
+              <SelectItem value="ARS">ARS</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

@@ -42,6 +42,8 @@ create table devices (
   imei text not null unique,
   serial_number text,
   status device_status not null default 'in_stock',
+  list_price_amount numeric(12, 2) check (list_price_amount >= 0),
+  list_price_currency currency_code,
   notes text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

@@ -50,6 +50,8 @@ export interface Database {
           imei: string;
           serial_number: string | null;
           status: DeviceStatus;
+          list_price_amount: number | null;
+          list_price_currency: CurrencyCode | null;
           notes: string | null;
           created_at: string;
           updated_at: string;

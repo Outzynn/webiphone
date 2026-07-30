@@ -95,6 +95,14 @@ export default async function DeviceDetailPage({
             value={device.battery_health_pct ? `${device.battery_health_pct}%` : "—"}
           />
           <Field label="N° de serie" value={device.serial_number ?? "—"} />
+          <Field
+            label="Precio de venta"
+            value={
+              device.list_price_amount && device.list_price_currency
+                ? formatCurrency(device.list_price_amount, device.list_price_currency)
+                : "—"
+            }
+          />
           {device.notes ? (
             <div className="col-span-full">
               <p className="text-muted-foreground">Notas</p>
