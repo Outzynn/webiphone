@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Pencil, Tag, ShoppingCart } from "lucide-react";
+import { Pencil, Tag, ShoppingCart, CalendarPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { LinkButton } from "@/components/link-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +23,7 @@ export default async function DeviceDetailPage({
   const { data: device } = await supabase
     .from("devices")
     .select(
-      "*, purchases(*, suppliers(name), trade_in_clients:clients!purchases_trade_in_client_id_fkey(name)), sales:sales!sales_device_id_fkey(*, clients(name), installments(*)), warranty_claims(*)",
+      "*, purchases(*, suppliers(name), trade_in_clients:clients!purchases_trade_in_client_id_fkey(name)), sales:sales!sales_device_id_fkey(*, clients(name), installments(*)), reservations(*, clients(name, phone)), warranty_claims(*)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -73,10 +73,16 @@ export default async function DeviceDetailPage({
             Editar
           </LinkButton>
           {device.status === "in_stock" ? (
-            <LinkButton href={`/ventas/nueva?device=${device.id}`} size="sm">
-              <ShoppingCart className="h-4 w-4" />
-              Vender
-            </LinkButton>
+            <>
+              <LinkButton href={`/reservas/nueva?device=${device.id}`} variant="outline" size="sm">
+                <CalendarPlus className="h-4 w-4" />
+                Reservar
+              </LinkButton>
+              <LinkButton href={`/ventas/nueva?device=${device.id}`} size="sm">
+                <ShoppingCart className="h-4 w-4" />
+                Vender
+              </LinkButton>
+            </>
           ) : null}
           <DeleteDeviceButton deviceId={device.id} />
         </div>
@@ -131,6 +137,25 @@ export default async function DeviceDetailPage({
                 </div>
               </div>
             ))}
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {device.reservations && device.reservations.status === "activa" ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Reserva activa</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+            <Field label="Fecha" value={device.reservations.reservation_date} />
+            <Field label="Cliente" value={device.reservations.clients?.name ?? "—"} />
+            <Field
+              label="Seña"
+              value={formatCurrency(
+                device.reservations.deposit_amount,
+                device.reservations.deposit_currency,
+              )}
+            />
           </CardContent>
         </Card>
       ) : null}

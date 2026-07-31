@@ -110,6 +110,12 @@ export async function createSale(formData: FormData) {
     .eq("id", deviceId);
   if (deviceError) throw deviceError;
 
+  await supabase
+    .from("reservations")
+    .update({ status: "convertida" })
+    .eq("device_id", deviceId)
+    .eq("status", "activa");
+
   if (paymentType === "cuotas") {
     const count = num(formData, "installment_count") ?? 1;
     const frequency = (str(formData, "installment_frequency") ?? "mensual") as InstallmentFrequency;
@@ -135,6 +141,7 @@ export async function createSale(formData: FormData) {
   revalidatePath("/ventas");
   revalidatePath("/inventario");
   revalidatePath("/cuotas");
+  revalidatePath("/reservas");
   revalidatePath("/");
   redirect(`/ventas/${sale.id}`);
 }

@@ -37,11 +37,13 @@ export function SaleForm({
   devices,
   clients,
   preselectedDeviceId,
+  preselectedClientId,
 }: {
   action: (formData: FormData) => void;
   devices: DeviceOption[];
   clients: { id: string; name: string }[];
   preselectedDeviceId?: string;
+  preselectedClientId?: string;
 }) {
   const [paymentType, setPaymentType] = useState<PaymentType>("contado");
   const [saleAmount, setSaleAmount] = useState<number>(0);
@@ -88,6 +90,7 @@ export function SaleForm({
         <Label htmlFor="client_id">Cliente</Label>
         <Select
           name="client_id"
+          defaultValue={preselectedClientId}
           items={clients.map((c) => ({ value: c.id, label: c.name }))}
         >
           <SelectTrigger id="client_id" className="w-full">

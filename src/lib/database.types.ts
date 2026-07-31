@@ -4,6 +4,7 @@ export type DeviceStatus = "in_stock" | "reserved" | "sold";
 export type CurrencyCode = "USD" | "ARS";
 export type PaymentType = "contado" | "cuotas";
 export type WarrantyStatus = "abierto" | "en_reparacion" | "resuelto";
+export type ReservationStatus = "activa" | "convertida" | "cancelada";
 
 export interface Database {
   public: {
@@ -205,6 +206,41 @@ export interface Database {
             columns: ["sale_id"];
             isOneToOne: false;
             referencedRelation: "sales";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      reservations: {
+        Row: {
+          id: string;
+          device_id: string;
+          client_id: string | null;
+          reservation_date: string;
+          deposit_amount: number;
+          deposit_currency: CurrencyCode;
+          status: ReservationStatus;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["reservations"]["Row"]> & {
+          device_id: string;
+          deposit_amount: number;
+          deposit_currency: CurrencyCode;
+        };
+        Update: Partial<Database["public"]["Tables"]["reservations"]["Row"]>;
+        Relationships: [
+          {
+            foreignKeyName: "reservations_device_id_fkey";
+            columns: ["device_id"];
+            isOneToOne: true;
+            referencedRelation: "devices";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reservations_client_id_fkey";
+            columns: ["client_id"];
+            isOneToOne: false;
+            referencedRelation: "clients";
             referencedColumns: ["id"];
           },
         ];

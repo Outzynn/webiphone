@@ -10,6 +10,7 @@ create type device_status as enum ('in_stock', 'reserved', 'sold');
 create type currency_code as enum ('USD', 'ARS');
 create type payment_type as enum ('contado', 'cuotas');
 create type warranty_status as enum ('abierto', 'en_reparacion', 'resuelto');
+create type reservation_status as enum ('activa', 'convertida', 'cancelada');
 
 -- ── Tablas base ────────────────────────────────────────────────────────────
 
@@ -117,6 +118,21 @@ create table installments (
 
 create index installments_sale_id_idx on installments (sale_id);
 
+create table reservations (
+  id uuid primary key default gen_random_uuid(),
+  device_id uuid not null unique references devices (id) on delete cascade,
+  client_id uuid references clients (id) on delete set null,
+  reservation_date date not null default current_date,
+  deposit_amount numeric(12, 2) not null check (deposit_amount >= 0),
+  deposit_currency currency_code not null,
+  status reservation_status not null default 'activa',
+  notes text,
+  created_at timestamptz not null default now()
+);
+
+create index reservations_client_id_idx on reservations (client_id);
+create index reservations_status_idx on reservations (status);
+
 create table warranty_claims (
   id uuid primary key default gen_random_uuid(),
   device_id uuid not null references devices (id) on delete cascade,
@@ -170,6 +186,7 @@ alter table device_photos enable row level security;
 alter table purchases enable row level security;
 alter table sales enable row level security;
 alter table installments enable row level security;
+alter table reservations enable row level security;
 alter table warranty_claims enable row level security;
 alter table app_settings enable row level security;
 
@@ -186,6 +203,8 @@ create policy "authenticated full access" on purchases
 create policy "authenticated full access" on sales
   for all to authenticated using (true) with check (true);
 create policy "authenticated full access" on installments
+  for all to authenticated using (true) with check (true);
+create policy "authenticated full access" on reservations
   for all to authenticated using (true) with check (true);
 create policy "authenticated full access" on warranty_claims
   for all to authenticated using (true) with check (true);

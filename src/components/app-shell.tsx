@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { SidebarNav } from "@/components/sidebar-nav";
 import { SignOutButton } from "@/components/sign-out-button";
+import { GlobalSearch } from "@/components/global-search";
 
 export function AppShell({
   email,
@@ -35,16 +36,18 @@ export function AppShell({
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-14 items-center gap-3 border-b bg-background px-4 md:hidden">
+        <header className="flex h-14 items-center gap-3 border-b bg-background px-4">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setOpen(true)}
             aria-label="Abrir menú"
+            className="md:hidden"
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <span className="font-semibold">WebiPhone</span>
+          <span className="font-semibold md:hidden">WebiPhone</span>
+          <GlobalSearch />
         </header>
 
         <Sheet open={open} onOpenChange={setOpen}>
