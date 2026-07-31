@@ -1,5 +1,7 @@
 import { Plus, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getSettings, resolveCurrentExchangeRate } from "@/lib/settings";
+import { toBaseCurrency } from "@/lib/currency";
 import { Button } from "@/components/ui/button";
 import { LinkButton } from "@/components/link-button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +22,7 @@ export default async function InventarioPage({
   let query = supabase
     .from("devices")
     .select(
-      "id, model, storage_gb, color, condition, imei, status, battery_health_pct, list_price_amount, list_price_currency, purchases(cost_amount, cost_currency)",
+      "id, model, storage_gb, color, condition, grade, imei, status, battery_health_pct, list_price_amount, list_price_currency, purchases(cost_amount, cost_currency)",
     )
     .order("created_at", { ascending: false });
 
@@ -31,28 +33,60 @@ export default async function InventarioPage({
 
   const { data: devices, error } = await query;
 
-  const rows: InventarioRow[] = (devices ?? []).map((d) => ({
-    id: d.id,
-    model: d.model,
-    storageGb: d.storage_gb,
-    color: d.color,
-    condition: d.condition,
-    imei: d.imei,
-    status: d.status,
-    batteryHealthPct: d.battery_health_pct,
-    costAmount: d.purchases?.cost_amount ?? null,
-    costCurrency: d.purchases?.cost_currency ?? null,
-    listPriceAmount: d.list_price_amount,
-    listPriceCurrency: d.list_price_currency,
-  }));
+  const settings = await getSettings();
+  let currentRate = 0;
+  try {
+    currentRate = await resolveCurrentExchangeRate(settings);
+  } catch {
+    currentRate = settings.manualExchangeRate ?? 0;
+  }
+
+  const rows: InventarioRow[] = (devices ?? []).map((d) => {
+    const cost = d.purchases?.cost_amount ?? null;
+    const price = d.list_price_amount;
+    let marginPct: number | null = null;
+    if (cost && price && d.purchases?.cost_currency && d.list_price_currency) {
+      const costInPriceCurrency = toBaseCurrency(
+        cost,
+        d.purchases.cost_currency,
+        currentRate,
+        d.list_price_currency,
+      );
+      if (costInPriceCurrency > 0) {
+        marginPct = ((price - costInPriceCurrency) / costInPriceCurrency) * 100;
+      }
+    }
+
+    return {
+      id: d.id,
+      model: d.model,
+      storageGb: d.storage_gb,
+      color: d.color,
+      condition: d.condition,
+      grade: d.grade,
+      imei: d.imei,
+      status: d.status,
+      batteryHealthPct: d.battery_health_pct,
+      costAmount: cost,
+      costCurrency: d.purchases?.cost_currency ?? null,
+      listPriceAmount: d.list_price_amount,
+      listPriceCurrency: d.list_price_currency,
+      marginPct,
+    };
+  });
 
   return (
     <div className="grid gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Inventario</h1>
+        <div>
+          <h1 className="text-2xl font-semibold">Inventario</h1>
+          <p className="text-sm text-muted-foreground">
+            Controlá cada producto, su estado y sus números.
+          </p>
+        </div>
         <LinkButton href="/inventario/nuevo">
           <Plus className="h-4 w-4" />
-          Nuevo dispositivo
+          Cargar producto
         </LinkButton>
       </div>
 
@@ -63,7 +97,7 @@ export default async function InventarioPage({
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 name="q"
-                placeholder="Buscar por IMEI o modelo..."
+                placeholder="Buscar por modelo o IMEI..."
                 defaultValue={q}
                 className="pl-8"
               />
@@ -74,7 +108,7 @@ export default async function InventarioPage({
               className="rounded-md border border-input bg-transparent px-3 py-2 text-sm"
             >
               <option value="">Todos los estados</option>
-              <option value="in_stock">En stock</option>
+              <option value="in_stock">Disponible</option>
               <option value="reserved">Reservado</option>
               <option value="sold">Vendido</option>
             </select>

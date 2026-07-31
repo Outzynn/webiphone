@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import type { DeviceStatus } from "@/lib/database.types";
 
 const LABELS: Record<DeviceStatus, string> = {
-  in_stock: "En stock",
+  in_stock: "Disponible",
   reserved: "Reservado",
   sold: "Vendido",
 };
